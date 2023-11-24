@@ -1,0 +1,138 @@
+import win.ui;
+import process;
+import crypt.protectData;
+/*DSG{{*/
+mainForm = win.form(text="rdphelper";right=431;bottom=495;border="dialog frame")
+mainForm.add(
+app={cls="edit";left=104;top=256;right=417;bottom=294;align="center";edge=1;font=LOGFONT(h=-19);multiline=1;tabstop=1;z=10};
+button={cls="button";text="生成";left=272;top=400;right=392;bottom=471;font=LOGFONT(h=-21);z=11};
+checkbox={cls="checkbox";text="直接运行";left=272;top=360;right=420;bottom=385;font=LOGFONT(h=-14);z=16};
+disk={cls="edit";left=104;top=304;right=417;bottom=342;align="center";edge=1;font=LOGFONT(h=-19);multiline=1;tabstop=1;z=13};
+host={cls="edit";left=104;top=16;right=417;bottom=54;align="center";edge=1;font=LOGFONT(h=-19);tabstop=1;z=2};
+location={cls="edit";left=104;top=208;right=417;bottom=246;align="center";edge=1;font=LOGFONT(h=-19);multiline=1;tabstop=1;z=15};
+passwd={cls="edit";left=104;top=112;right=417;bottom=150;align="center";edge=1;font=LOGFONT(h=-19);multiline=1;password=1;tabstop=1;z=6};
+screen={cls="edit";left=104;top=160;right=417;bottom=198;align="center";edge=1;font=LOGFONT(h=-19);multiline=1;tabstop=1;z=8};
+showpass={cls="checkbox";text="密码显示";left=112;top=360;right=260;bottom=385;font=LOGFONT(h=-14);z=17};
+static={cls="static";text="域名*";left=12;top=21;right=80;bottom=60;align="center";font=LOGFONT(h=-19);transparent=1;z=1};
+static2={cls="static";text="用户名*";left=12;top=73;right=80;bottom=112;align="center";font=LOGFONT(h=-19);transparent=1;z=3};
+static3={cls="static";text="窗口位置";left=8;top=216;right=92;bottom=255;align="center";font=LOGFONT(h=-19);transparent=1;z=14};
+static4={cls="static";text="磁盘";left=16;top=312;right=84;bottom=351;align="center";font=LOGFONT(h=-19);transparent=1;z=12};
+static5={cls="static";text="密码";left=8;top=120;right=76;bottom=159;align="center";font=LOGFONT(h=-19);transparent=1;z=5};
+static6={cls="static";text="窗口大小";left=8;top=168;right=92;bottom=207;align="center";font=LOGFONT(h=-19);transparent=1;z=7};
+static7={cls="static";text="软件名";left=16;top=264;right=84;bottom=303;align="center";font=LOGFONT(h=-19);transparent=1;z=9};
+user={cls="edit";text="Administrator";left=104;top=64;right=417;bottom=102;align="center";edge=1;font=LOGFONT(h=-19);multiline=1;tabstop=1;z=4}
+)
+/*}}*/
+
+var width, height = ::User32.GetSystemMetrics(0x0), ::User32.GetSystemMetrics(0x1);
+var passwordChar = mainForm.passwd.passwordChar;
+
+// 加密密码
+var encryptPassword = function(password){
+	var hexPass = crypt.protectData.encrypt(password, "psw",,0);
+	return hexPass;
+}
+
+// 生成文件
+var buttonFunc = function(host, user, passwd, screen, location, app, disk){
+	if(host === "" || user === ""){
+		win.msgbox("域名和用户名不能为空!", "错误提示");
+		return ;
+	}
+	var l;
+	// 处理全屏和窗口大小
+	var desktopwidth, desktopheight, screenMode = width, height, 2;
+	if(screen != ""){
+		var w, h = string.match(screen, `(\d+)x(\d+)`);
+		desktopwidth, l = tonumber(w);
+		desktopheight, l = tonumber(h);
+		if(desktopwidth > width) desktopwidth = width;
+		if(desktopheight > height) desktopheight = height;
+		if(desktopwidth == width && desktopheight == height) screenMode = 2;
+		else screenMode = 1;
+	}
+	// 处理窗口位置
+	var winposstr;
+	if(location === "") location = "0,0,800,600";
+	winposstr = string.replace(location, "@，", ",");
+	winposstr = string.replace(winposstr, "@ ", "");
+	// 域名必须带.
+	if(!string.find(host, "@.")){
+		mainForm.host.text = "";
+		win.msgbox("域名格式错误!", "错误提示");
+		return ;
+	}
+	
+	var rdpStringTmpl = string.load("\rdp.tmpl");
+	var rdpString = string.format(rdpStringTmpl, screenMode, desktopwidth, 
+				desktopheight, winposstr, host, user);
+	var filename = string.format("\%s.rdp", string.replace(host, "@:", "_"));	
+	// 磁盘
+	if(disk != ""){
+		var diskLine = string.format("drivestoredirect:s:%s", disk);
+		rdpString = rdpString + '\r\n' + diskLine;
+	}	
+	// 密码
+	if(passwd != ""){
+		// utf-16-le
+		// var password = '12345678'u;
+		var password = string.fromto(passwd, 0, 1200);
+		var passwdLine = string.format("password 51:b:%s", encryptPassword(password));
+		rdpString = rdpString + '\r\n' + passwdLine;
+	}
+	// remoteapp
+	if(app != ""){
+		var appStringTmpl  = string.load("\remoteapp.tmpl");
+		var appString = string.format(appStringTmpl, host, app, app);
+		rdpString = rdpString + '\r\n' + appString;
+		filename = string.format("\%s.rdp", app);
+	}
+	string.save(filename, rdpString);
+	return filename;
+}
+
+
+
+var main = function(){
+	// 设置输入框提示
+	mainForm.host.setCueBannerText("请输入IP:端口", true);
+	var text = string.format("窗口大小,默认全屏(%dx%d)", width, height);
+	mainForm.screen.setCueBannerText(text, true);
+	mainForm.passwd.setCueBannerText("请输入密码", true);
+	mainForm.app.setCueBannerText("请输入remoteapp名称", true);
+	mainForm.location.setCueBannerText("请输入窗口位置(0,0,800,600):", true);
+	mainForm.disk.setCueBannerText("请输入需要重定向的磁盘(C:;D:;E:;):", true);
+	
+}
+
+
+mainForm.button.oncommand = function(id,event){
+	var host = mainForm.host.text;
+	var user = mainForm.user.text;
+	var passwd = mainForm.passwd.text;
+	var screen = mainForm.screen.text;
+	var location = mainForm.location.text;
+	var app = mainForm.app.text;
+	var disk = mainForm.disk.text;
+	var isRun = mainForm.checkbox.checked;
+	var filename = buttonFunc(host, user, passwd, screen, location, app, disk);
+	if(isRun){
+		process.execute("mstsc.exe", io.localpath(filename));
+	}
+}
+
+mainForm.showpass.oncommand = function(id,event){
+	if(mainForm.showpass.checked){
+		mainForm.passwd.passwordChar = null //显示密码
+	}else{
+		mainForm.passwd.passwordChar = passwordChar //隐藏密码
+	}
+}
+
+
+main();
+
+
+
+mainForm.show();
+return win.loopMessage();

@@ -1,0 +1,45 @@
+https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/clients/rdp-files
+https://learn.microsoft.com/en-us/troubleshoot/windows-server/remote/remote-desktop-protocol-settings
+
+screen mode id 非全屏(1) 全屏(2)
+use multimon  勾选(1) 不勾选(0) 将我的所以监视器用于远程。比如本地和远程都有两个显示器就可以勾选
+desktopwidth 远程宽度
+desktopheight 远程高度
+session bpp  选择远程会话的颜色深度 最高质量(32)
+displayconnectionbar 全屏显示时显示连接栏，这个要是不显示都不知道怎么关
+winposstr 远程桌面的屏幕位置，后四个为左上右下的距离, 主显示器左上角为0,位于主显示器左边的显示器坐标取负数。第一个参数始终为0。第二个没找到,默认的值是3，要生效的值是1 https://social.technet.microsoft.com/wiki/contents/articles/665.how-to-set-the-monitor-for-a-remote-desktop-session-in-a-multi-monitor-setup.aspx
+compression 是否压缩
+keyboardhook 是否将全局快捷键(组合键)用于远程桌面，默认值为仅全屏时(2)，获取焦点时(1), 不用于(0)
+audiocapturemode 麦克风重定向
+username 远程用户名
+password 密码
+disable wallpaper 禁用壁纸, 默认(0)
+bitmapcachepersistenable 持久位图缓存，就是只传输变化的画面，节省网络消耗
+full address 连接的地址
+audiomode 本地播放声音(0)，远程播放声音(1), 静音(2)
+redirectprinters 重定向打印机
+redirectlocation 重定向位置
+redirectcomports 重定向端口
+redirectsmartcards 重定向智能卡
+redirectwebauthn 重定向WebAuthn
+redirectclipboard 重定向剪切板
+redirectposdevices 重定向这个啥
+drivestoredirect 重定向磁盘，例如C和E盘 drivestoredirect:s:C:;E:;     drivestoredirect:s:*表示重定向所有磁盘
+autoreconnection enabled 断线自动重连
+authentication level 服务器身份严重 连接但不显示警告(0) 不连接(1) 显示警告(2)
+prompt for credentials 提示输入凭据
+remoteapplicationmode 远程应用模式，也就是remoteapp
+alternate shell 指定远程会话中自动启动的程序，值为软件的绝对路径。指定了软件就只能使用该软件，软件退出，远程就会退出
+
+
+videoplaybackmode 是否会使用 RDP 高效多媒体流式处理进行视频播放
+connection type 选择链接速度来优化性能，局域网(10Mbps或更高)为6，其他值不重要
+networkautodetect 是否启用了自动网络类型检测 不检测(0)
+bandwidthautodetect 是否使用自动网络带宽检测, 该值建议为1
+enableworkspacereconnect 没什么用，建议默认(0) https://social.technet.microsoft.com/Forums/en-US/dd479f00-7929-491c-8982-0d5a31ae20fc/enableworkspacereconnecti-what-does-it-do?forum=winserverTS
+allow font smoothing 是否启用字体平滑
+allow desktop composition 桌面合成
+disable full window drag 拖动时显示窗口内容
+disable menu anims 菜单和窗口动画
+disable themes 视觉样式
+disable cursor setting 禁用光标设置
